@@ -33,18 +33,13 @@ def download_and_crop_image(img_url, top_crop_percentage=0.22):
         response = requests.get(img_url, headers=headers, timeout=8)
         
         if response.status_code == 200:
-            # Bytes se image load karein
             img = Image.open(io.BytesIO(response.content))
             width, height = img.size
 
-            # Top header/badge cut karein (~22%)
             top_offset = int(height * top_crop_percentage)
             cropped_img = img.crop((0, top_offset, width, height))
 
-            # Cropped image ko JPEG format bytes mein convert karein
             buffer = io.BytesIO()
-            
-            # Convert RGB if image is RGBA (e.g. PNGs)
             if cropped_img.mode in ("RGBA", "P"):
                 cropped_img = cropped_img.convert("RGB")
                 
@@ -140,8 +135,10 @@ def scrape_daraz_category_or_brand(search_query, max_products=50):
                         link = 'https:' + link
 
                     price_str = price_elem.inner_text() if price_elem else "0"
-                    clean_price = re.sub(r'[^\d.]', '', price_str.replace(',', ''))
-                    price = float(clean_price) if clean_price else 0.0
+                    
+                    # Clean Price Logic: Sirf numbers extract karein (no float, integer only)
+                    clean_price = re.sub(r'[^\d]', '', price_str)
+                    price = int(clean_price) if clean_price else 0
 
                     img_url = ""
                     if img_elem:
@@ -151,7 +148,7 @@ def scrape_daraz_category_or_brand(search_query, max_products=50):
 
                     products.append({
                         'original_name': name,
-                        'original_description': name, # Daraz listing page pr short description nahi hoti, name use kar rahe hain
+                        'original_description': name,
                         'price': price,
                         'image_url': img_url,
                         'product_url': link
