@@ -181,6 +181,9 @@ def scrape_daraz_product(url):
         if raw_image_url.startswith('//'):
             raw_image_url = 'https:' + raw_image_url
 
+        # Divide original price by 2.8
+        calculated_price = round(price_decimal / 2.8, 2) if price_decimal > 0 else 0.0
+
         # AI Text Rewrite
         unique_name, unique_description = rewrite_text_with_ai(raw_name, raw_description)
 
@@ -189,7 +192,8 @@ def scrape_daraz_product(url):
             'ai_name': unique_name,
             'original_description': raw_description,
             'ai_description': unique_description,
-            'price': price_decimal,
+            'original_price': price_decimal,
+            'price': calculated_price,
             'image_url': raw_image_url,
             'product_url': url
         }

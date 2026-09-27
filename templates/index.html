@@ -48,8 +48,22 @@
 
                 <div class="row">
                     <div class="col-md-4 text-center mb-3">
-                        <img src="{{ data.image_url }}" class="img-fluid img-preview mb-2" alt="Product Image">
-                        <h4 class="text-orange mt-2 fw-bold" style="color: #ff6801;">Rs. {{ data.price }}</h4>
+                        {% if data.image_url %}
+                            <img src="{{ data.image_url }}" class="img-fluid img-preview mb-2" alt="Product Image">
+                        {% else %}
+                            <div class="p-4 border rounded bg-light text-muted mb-2">No Image Found</div>
+                        {% endif %}
+
+                        <!-- Original Price -->
+                        <div class="text-muted small text-decoration-line-through mt-2">
+                            Daraz Price: Rs. {{ data.original_price }}
+                        </div>
+
+                        <!-- Calculated Price (÷ 2.8) -->
+                        <h4 class="text-orange mt-1 fw-bold" style="color: #ff6801;">
+                            Calculated: Rs. {{ data.price }}
+                        </h4>
+                        <span class="badge bg-info text-dark">Divided by 2.8</span>
                     </div>
 
                     <div class="col-md-8">
@@ -83,4 +97,3 @@
 
 </body>
 </html>
-
