@@ -3,7 +3,11 @@ import io
 import zipfile
 import requests
 from flask import Flask, render_template, request, Response, send_file
-from scraper_bulk import scrape_daraz_category_or_brand, sanitize_filename
+from scraper_bulk import (
+    scrape_daraz_category_or_brand, 
+    sanitize_filename, 
+    download_and_crop_image
+)
 
 app = Flask(__name__)
 
@@ -49,8 +53,6 @@ def download_zip():
         ]
         writer.writerow(headers)
 
-        headers_req = {'User-Agent': 'Mozilla/5.0'}
-
         for idx, item in enumerate(scraped_bulk_cache, start=1):
             ai_name = item.get('ai_name', f"Product_{idx}")
             safe_name = sanitize_filename(ai_name)
@@ -73,15 +75,15 @@ def download_zip():
                 'TRUE'                                          # Is Active
             ])
 
-            # 2. Download Image and Add to ZIP Archive
+            # 2. Download & Crop Image (Top Header/Badge Removed)
             img_url = item.get('image_url')
             if img_url:
                 try:
-                    img_resp = requests.get(img_url, headers=headers_req, timeout=5)
-                    if img_resp.status_code == 200:
-                        zip_file.writestr(img_filename, img_resp.content)
+                    cropped_bytes = download_and_crop_image(img_url, top_crop_percentage=0.22)
+                    if cropped_bytes:
+                        zip_file.writestr(img_filename, cropped_bytes)
                 except Exception as img_err:
-                    print(f"Failed to download image {img_url}: {img_err}")
+                    print(f"Failed to process image {img_url}: {img_err}")
 
         # Add CSV file into ZIP archive
         zip_file.writestr('product_import.csv', csv_buffer.getvalue())

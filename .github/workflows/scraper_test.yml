@@ -20,7 +20,7 @@ jobs:
       - name: Install Dependencies & Playwright
         run: |
           python -m pip install --upgrade pip
-          pip install requests beautifulsoup4 google-genai flask playwright
+          pip install requests beautifulsoup4 google-genai flask playwright Pillow
           playwright install chromium --with-deps
 
       - name: Install Cloudflared

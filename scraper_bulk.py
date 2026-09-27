@@ -5,6 +5,7 @@ import csv
 import zipfile
 import re
 import requests
+from PIL import Image
 from playwright.sync_api import sync_playwright
 
 try:
@@ -18,6 +19,41 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 def sanitize_filename(name):
     """Filename ke illegal characters ko clean karta hai."""
     return re.sub(r'[\\/*?:"<>|]', "", name).strip().replace(" ", "_")[:50]
+
+def download_and_crop_image(img_url, top_crop_percentage=0.22):
+    """
+    Daraz image ke top header badges ko crop/remove karta hai.
+    Top 22% portion ko cut karke clean product image bytes return karta hai.
+    """
+    if not img_url:
+        return None
+
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        response = requests.get(img_url, headers=headers, timeout=8)
+        
+        if response.status_code == 200:
+            # Bytes se image load karein
+            img = Image.open(io.BytesIO(response.content))
+            width, height = img.size
+
+            # Top header/badge cut karein (~22%)
+            top_offset = int(height * top_crop_percentage)
+            cropped_img = img.crop((0, top_offset, width, height))
+
+            # Cropped image ko JPEG format bytes mein convert karein
+            buffer = io.BytesIO()
+            
+            # Convert RGB if image is RGBA (e.g. PNGs)
+            if cropped_img.mode in ("RGBA", "P"):
+                cropped_img = cropped_img.convert("RGB")
+                
+            cropped_img.save(buffer, format="JPEG", quality=95)
+            return buffer.getvalue()
+    except Exception as e:
+        print(f"Image downloading/cropping error: {e}")
+    
+    return None
 
 def rewrite_bulk_with_ai(products):
     """Gemini AI se multiple products ke titles aur descriptions rewrite karta hai."""
@@ -133,4 +169,3 @@ def scrape_daraz_category_or_brand(search_query, max_products=50):
     # AI Rewrite for all scraped products
     products = rewrite_bulk_with_ai(products)
     return products
-
