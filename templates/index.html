@@ -3,31 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daraz Scraper & AI Rephraser</title>
+    <title>Daraz Bulk Scraper & AI Rephraser</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .card { border-radius: 12px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .btn-orange { background-color: #ff6801; color: white; border: none; font-weight: 600; }
         .btn-orange:hover { background-color: #e05b00; color: white; }
-        .ai-box { background-color: #eef9f1; border-left: 4px solid #198754; padding: 15px; border-radius: 6px; }
-        .img-preview { max-height: 250px; object-fit: contain; border-radius: 8px; border: 1px solid #ddd; }
+        .product-img { width: 60px; height: 60px; object-fit: contain; border-radius: 6px; }
     </style>
 </head>
 <body>
 
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-9">
+        <div class="col-md-11">
             
             <div class="card p-4 mb-4 text-center">
-                <h2 class="fw-bold text-dark mb-1">🛒 Daraz AI Scraper Testing Tool</h2>
-                <p class="text-muted">Daraz product link paste karein aur AI rewritten title, description & details extract karein.</p>
+                <h2 class="fw-bold text-dark mb-1">🛒 Daraz Bulk Brand/Category Scraper</h2>
+                <p class="text-muted">Brand ya Category likhein (e.g., "Samsung", "Watches") aur top 50 products rewrite karke ZIP download karein.</p>
 
                 <form method="POST" class="mt-3">
                     <div class="input-group input-group-lg mb-3">
-                        <input type="url" name="product_url" class="form-control" placeholder="https://www.daraz.pk/products/..." required>
-                        <button class="btn btn-orange px-4" type="submit">Scrape & Rewrite</button>
+                        <input type="text" name="search_query" class="form-control" placeholder="Brand / Category Name (e.g. Nike, Electronics)..." required>
+                        <button class="btn btn-orange px-4" type="submit">Scrape Top 50</button>
                     </div>
                 </form>
 
@@ -36,50 +35,42 @@
                 {% endif %}
             </div>
 
-            {% if data %}
+            {% if data_list %}
             <div class="card p-4">
-                <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-                    <h4 class="mb-0 text-success">✅ Scraping Results</h4>
-                    <div>
-                        <a href="/download/csv" class="btn btn-outline-primary btn-sm me-2">📥 Download CSV</a>
-                        <a href="/download/json" class="btn btn-outline-dark btn-sm">📥 Download JSON</a>
-                    </div>
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <h4 class="mb-0 text-success">✅ Found {{ data_list|length }} Products</h4>
+                    <a href="/download/zip" class="btn btn-success btn-lg fw-bold">📦 Download ZIP (CSV + Images)</a>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-4 text-center mb-3">
-                        {% if data.image_url %}
-                            <img src="{{ data.image_url }}" class="img-fluid img-preview mb-2" alt="Product Image">
-                        {% else %}
-                            <div class="p-4 border rounded bg-light text-muted mb-2">No Image Found</div>
-                        {% endif %}
-
-                        <h4 class="text-orange mt-2 fw-bold" style="color: #ff6801;">
-                            Rs. {{ data.price }}
-                        </h4>
-                    </div>
-
-                    <div class="col-md-8">
-                        <div class="mb-3">
-                            <label class="fw-bold text-muted small">ORIGINAL TITLE:</label>
-                            <p class="text-secondary mb-1">{{ data.original_name }}</p>
-                        </div>
-
-                        <div class="mb-3 ai-box">
-                            <label class="fw-bold text-success small">✨ AI REWRITTEN TITLE:</label>
-                            <p class="fw-bold text-dark mb-0">{{ data.ai_name }}</p>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="fw-bold text-muted small">ORIGINAL DESCRIPTION:</label>
-                            <p class="small text-secondary mb-0" style="max-height: 100px; overflow-y: auto;">{{ data.original_description or 'N/A' }}</p>
-                        </div>
-
-                        <div class="mb-3 ai-box">
-                            <label class="fw-bold text-success small">✨ AI REWRITTEN DESCRIPTION:</label>
-                            <p class="small text-dark mb-0" style="max-height: 150px; overflow-y: auto;">{{ data.ai_description or 'N/A' }}</p>
-                        </div>
-                    </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Image</th>
+                                <th>Original Title</th>
+                                <th>✨ AI Rewritten Title</th>
+                                <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in data_list %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>
+                                    {% if item.image_url %}
+                                        <img src="{{ item.image_url }}" class="product-img" alt="Product">
+                                    {% else %}
+                                        <span class="text-muted small">No Img</span>
+                                    {% endif %}
+                                </td>
+                                <td><small class="text-secondary">{{ item.original_name }}</small></td>
+                                <td><strong class="text-dark">{{ item.ai_name }}</strong></td>
+                                <td class="text-orange fw-bold" style="color: #ff6801;">Rs. {{ item.price }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
             {% endif %}
