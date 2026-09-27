@@ -22,10 +22,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests beautifulsoup4 google-genai flask
 
-      - name: Download & Install Cloudflared
+      - name: Install Cloudflared
         run: |
-          wget -q https://github.com/cloudflare/cloudflare-tunnel-remote/releases/latest/download/cloudflared-linux-amd64.deb
-          sudo dpkg -i cloudflared-linux-amd64.deb
+          sudo mkdir -p --mode=0755 /etc/apt/keyrings
+          curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /etc/apt/keyrings/cloudflare-main.gpg >/dev/null
+          echo "deb [signed-by=/etc/apt/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared jammy main" | sudo tee /etc/apt/sources.list.d/cloudflared.list
+          sudo apt-get update && sudo apt-get install -y cloudflared
 
       - name: Start Flask App & Cloudflare Tunnel
         env:
@@ -35,17 +37,16 @@ jobs:
           python app.py &
           sleep 3
 
-          # 2. Cloudflare Tunnel start karein aur link log file mein save karein
+          # 2. Cloudflare Tunnel start karein aur output log karein
           cloudflared tunnel --url http://localhost:5000 > cloudflare.log 2>&1 &
           
           echo "Tunnel setup ho raha hai, link ka wait karein..."
-          sleep 8
+          sleep 10
 
-          # 3. Log file se public trycloudflare URL extract karke print karein
+          # 3. Log file se public trycloudflare URL print karein
           echo -e "\n=================================================="
           grep -o 'https://[-a-zA-Z0-9]*\.trycloudflare\.com' cloudflare.log | head -n 1 | awk '{print "🚀 AAPKA LIVE WEB APP READY HAI!\n👉 Public Link: " $1}'
           echo -e "==================================================\n"
 
           # 4. Runner ko 4 ghante (14,400 seconds) tak active rakhein
           sleep 14400
-
