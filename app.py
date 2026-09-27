@@ -39,23 +39,35 @@ def download_csv():
     output = io.StringIO()
     writer = csv.writer(output)
     
-    # Headers
-    writer.writerow(['Original Name', 'AI Name', 'Price', 'Image URL', 'Original Desc', 'AI Desc', 'Product URL'])
-    # Row Data
+    # 1. Exact CSV Headers matching product_import_template.csv
+    headers = [
+        'Name*', 'Serial No', 'Barcode', 'Description', 
+        'Category', 'Brand', 'Unit', 'Location', 
+        'Type', 'Price', 'Low Stock Threshold', 'Used For', 'Is Active'
+    ]
+    writer.writerow(headers)
+    
+    # 2. Row Data mapped to template fields
     writer.writerow([
-        scraped_cache.get('original_name', ''),
-        scraped_cache.get('ai_name', ''),
-        scraped_cache.get('price', 0),
-        scraped_cache.get('image_url', ''),
-        scraped_cache.get('original_description', ''),
-        scraped_cache.get('ai_description', ''),
-        scraped_cache.get('product_url', '')
+        scraped_cache.get('ai_name', ''),              # Name* (AI Rewritten Name)
+        '',                                             # Serial No
+        '',                                             # Barcode
+        scraped_cache.get('ai_description', ''),       # Description (AI Rewritten Description)
+        '',                                             # Category
+        '',                                             # Brand
+        'piece',                                        # Unit
+        '',                                             # Location
+        '',                                             # Type
+        scraped_cache.get('price', 0),                  # Price (Calculated Price)
+        '',                                             # Low Stock Threshold
+        '',                                             # Used For
+        'TRUE'                                          # Is Active
     ])
 
     return Response(
         output.getvalue(),
         mimetype="text/csv",
-        headers={"Content-disposition": "attachment; filename=daraz_scraped_product.csv"}
+        headers={"Content-disposition": "attachment; filename=product_import.csv"}
     )
 
 
@@ -73,4 +85,3 @@ def download_json():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
-
